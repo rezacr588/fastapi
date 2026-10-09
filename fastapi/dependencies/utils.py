@@ -788,7 +788,7 @@ def request_params_to_args(
         return values, errors
 
     first_field = fields[0]
-    fields_to_extract = fields
+    fields_to_extract: Sequence[ModelField] = ()
     single_not_embedded_field = False
     default_convert_underscores = True
     if len(fields) == 1 and lenient_issubclass(
@@ -856,6 +856,10 @@ def request_params_to_args(
             "Params must be subclasses of Param"
         )
         loc = (field_info.in_.value, get_validation_alias(field))
+        # A factory returning None has already supplied this field's default.
+        if value is None and field_info.default_factory is not None:
+            values[field.name] = None
+            continue
         v_, errors_ = _validate_value_with_model_field(
             field=field, value=value, values=values, loc=loc
         )
